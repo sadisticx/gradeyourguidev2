@@ -84,36 +84,9 @@ const FilterPanel = ({
   return (
     <div className={`bg-white p-4 rounded-lg shadow-sm border ${className}`}>
       {isLoading ? (
-<<<<<<< HEAD
         <div className="flex justify-center items-center py-4 w-full">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
           <span className="ml-3">Loading filters...</span>
-=======
-        <div className="flex justify-center items-center py-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-          <span className="ml-3">Loading filters...</span>
-        </div>
-      ) : (
-        <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-end md:space-x-4">
-        <div className="space-y-2 w-full md:w-1/5">
-          <Label htmlFor="section">Section</Label>
-          <Select
-            value={filters.section}
-            onValueChange={(value) => handleFilterChange("section", value)}
-          >
-            <SelectTrigger id="section">
-              <SelectValue placeholder="All Sections" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all-sections">All Sections</SelectItem>
-              {sections.map((section) => (
-                <SelectItem key={section.value} value={section.value}>
-                  {section.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
         </div>
       ) : (
         <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-end md:space-x-4">
@@ -193,7 +166,6 @@ const FilterPanel = ({
             </div>
           </div>
 
-<<<<<<< HEAD
           <div className="flex space-x-2 w-full md:w-auto">
             <Button
               variant="outline"
@@ -210,19 +182,6 @@ const FilterPanel = ({
           </div>
         </div>
       )}
-=======
-        <div className="flex space-x-2 w-full md:w-auto">
-          <Button variant="outline" size="icon" onClick={handleReset} disabled={isLoading}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button disabled={isLoading}>
-            <Filter className="mr-2 h-4 w-4" />
-            Apply Filters
-          </Button>
-        </div>
-      )
-      </div>
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
 
       <div className="mt-4">
         <Label>Date Range</Label>

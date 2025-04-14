@@ -5,7 +5,6 @@ import type { Database } from "@/types/supabase";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-<<<<<<< HEAD
 // Initialize database connection
 const initializeDatabase = async () => {
   try {
@@ -30,8 +29,6 @@ const initializeDatabase = async () => {
   }
 };
 
-=======
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
 console.log("Supabase URL:", supabaseUrl);
 console.log(
   "Supabase Anon Key:",
@@ -47,12 +44,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-<<<<<<< HEAD
 // Call initialization function
 initializeDatabase();
 
-=======
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
 // Helper functions for common Supabase operations
 
 // Authentication helpers
@@ -124,6 +118,7 @@ export const updateData = async <T>(
   id: string,
   data: Partial<T>,
 ) => {
+  console.log(`Attempting to update ${table} with id ${id}:`, data);
   const { data: updatedData, error } = await supabase
     .from(table)
     .update(data)
@@ -135,16 +130,23 @@ export const updateData = async <T>(
     throw error;
   }
 
+  console.log(`Successfully updated ${table}:`, updatedData);
   return updatedData as T[];
 };
 
 export const deleteData = async (table: string, id: string) => {
-  const { error } = await supabase.from(table).delete().eq("id", id);
+  console.log(`Attempting to delete from ${table} with id ${id}`);
+  const { data, error } = await supabase
+    .from(table)
+    .delete()
+    .eq("id", id)
+    .select();
 
   if (error) {
     console.error(`Error deleting data from ${table}:`, error);
     throw error;
   }
 
-  return true;
+  console.log(`Successfully deleted from ${table}:`, data);
+  return data;
 };

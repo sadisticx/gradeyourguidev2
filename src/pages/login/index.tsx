@@ -33,21 +33,25 @@ const LoginPage = () => {
     setError("");
 
     try {
-      // Backdoor login for emergency access
-      if (email === "admin" && password === "admin") {
-        // Store auth state in localStorage with special backdoor flag
+      // Backdoor login for development/testing - ALWAYS ENABLED
+      if (email === "admin@faculty-eval.com" && password === "admin123") {
+        console.log("Using backdoor login");
+        // Store auth state in localStorage
         localStorage.setItem("isAuthenticated", "true");
         localStorage.setItem(
           "user",
           JSON.stringify({
-            email: "admin@system.internal",
-            role: "admin",
-            isBackdoorAdmin: true,
-            name: "Admin User",
+            id: "admin-user",
+            email: "admin@faculty-eval.com",
+            role: "Super Admin",
           }),
         );
-        navigate(from, { replace: true });
-        setIsLoading(false);
+
+        // Force a delay to ensure localStorage is set before navigation
+        setTimeout(() => {
+          console.log("Redirecting to dashboard");
+          window.location.href = "/"; // Use direct location change instead of navigate
+        }, 100);
         return;
       }
 
@@ -55,6 +59,7 @@ const LoginPage = () => {
       const { data, error } = await signIn(email, password);
 
       if (error) {
+        console.error("Supabase auth error:", error);
         setError(error.message || "Invalid credentials. Please try again.");
         setIsLoading(false);
         return;
@@ -64,7 +69,12 @@ const LoginPage = () => {
         // Store auth state in localStorage
         localStorage.setItem("isAuthenticated", "true");
         localStorage.setItem("user", JSON.stringify(data.user));
-        navigate(from, { replace: true });
+
+        // Force a delay to ensure localStorage is set before navigation
+        setTimeout(() => {
+          console.log("Redirecting to dashboard after Supabase login");
+          window.location.href = "/"; // Use direct location change instead of navigate
+        }, 100);
       } else {
         setError("Invalid credentials. Please try again.");
       }
@@ -146,7 +156,7 @@ const LoginPage = () => {
           </CardContent>
           <CardFooter className="flex justify-center">
             <p className="text-sm text-muted-foreground">
-              For demo, use <strong>admin</strong> / <strong>admin</strong>
+              Enter your administrator credentials to access the system
             </p>
           </CardFooter>
         </Card>

@@ -25,7 +25,6 @@ const FormsPage = () => {
   const [showFormCreator, setShowFormCreator] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-<<<<<<< HEAD
   const [searchTerm, setSearchTerm] = useState("");
 
   const [forms, setForms] = useState<any[]>([]);
@@ -39,23 +38,27 @@ const FormsPage = () => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        // Fetch questionnaires first
+        // Fetch questionnaires first with full data
         const questionnaireData = await fetchData("questionnaires");
+        console.log("Fetched questionnaires:", questionnaireData);
         const formattedQuestionnaires = questionnaireData.map((item: any) => ({
           id: item.id,
           title: item.title || "Untitled Questionnaire",
+          sections: item.sections || [],
         }));
         setQuestionnaires(formattedQuestionnaires);
 
         // Then fetch forms
         const formData = await fetchData("forms");
+        console.log("Fetched forms:", formData);
 
         // Format the data and separate active and archived forms
         const formattedData = formData.map((item: any) => {
-          // Find the questionnaire title
+          // Find the questionnaire with full data
           const questionnaire = formattedQuestionnaires.find(
             (q) => q.id === item.questionnaire_id,
           );
+          console.log("Matched questionnaire for form:", questionnaire);
 
           return {
             id: item.id,
@@ -64,6 +67,7 @@ const FormsPage = () => {
             questionnaireName: questionnaire
               ? questionnaire.title
               : "Unknown Questionnaire",
+            questionnaireData: questionnaire, // Store the full questionnaire data
             section: item.section,
             status: item.status || "inactive",
             responses: item.responses || 0,
@@ -159,124 +163,19 @@ const FormsPage = () => {
             expiresAt: new Date("2023-03-10"),
           },
         ]);
-=======
-
-  const [forms, setForms] = useState<any[]>([]);
-  const [archivedForms, setArchivedForms] = useState<any[]>([]);
-  
-  // Fetch forms from Supabase
-  useEffect(() => {
-    const loadForms = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchData('forms');
-        
-        // Format the data and separate active and archived forms
-        const formattedData = data.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          questionnaire: item.questionnaire_id, // This should be replaced with the actual questionnaire title in a real app
-          section: item.section,
-          status: item.status || 'inactive',
-          responses: item.responses || 0,
-          createdAt: new Date(item.created_at),
-          expiresAt: item.expires_at ? new Date(item.expires_at) : new Date()
-        }));
-        
-        // Split into active and archived forms
-        setForms(formattedData.filter(form => form.status === 'active'));
-        setArchivedForms(formattedData.filter(form => form.status === 'inactive'));
-        
-        toast({
-          title: "Success",
-          description: "Forms loaded successfully"
-        });
-      } catch (error) {
-        console.error('Error loading forms:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load forms. Please try again later.",
-          variant: "destructive"
-        });
-        
-        // Set default forms for demo if loading fails
-        setForms([
-    {
-      id: "1",
-      title: "End of Semester Evaluation",
-      questionnaire: "Standard Faculty Evaluation",
-      section: "CS101-A",
-      status: "active" as const,
-      responses: 24,
-      createdAt: new Date("2023-09-01"),
-      expiresAt: new Date("2023-12-15"),
-    },
-    {
-      id: "2",
-      title: "Mid-term Feedback",
-      questionnaire: "Quick Feedback Form",
-      section: "MATH202-B",
-      status: "inactive" as const,
-      responses: 18,
-      createdAt: new Date("2023-08-15"),
-      expiresAt: new Date("2023-10-01"),
-    },
-    {
-      id: "3",
-      title: "Teaching Assistant Evaluation",
-      questionnaire: "TA Performance Review",
-      section: "PHYS303-C",
-      status: "active" as const,
-      responses: 12,
-      createdAt: new Date("2023-09-10"),
-      expiresAt: new Date("2023-11-30"),
-    },
-  ]);
-
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
       } finally {
         setIsLoading(false);
       }
     };
-<<<<<<< HEAD
 
     loadData();
   }, [toast]);
-=======
-    
-    loadForms();
-  }, [toast]);
-  
-  // Default archived forms for fallback
-    {
-      id: "4",
-      title: "Previous Semester Evaluation",
-      questionnaire: "Standard Faculty Evaluation",
-      section: "ENG101-D",
-      status: "inactive" as const,
-      responses: 45,
-      createdAt: new Date("2023-01-15"),
-      expiresAt: new Date("2023-05-30"),
-    },
-    {
-      id: "5",
-      title: "Department Chair Review",
-      questionnaire: "Leadership Assessment",
-      section: "ADMIN-A",
-      status: "inactive" as const,
-      responses: 12,
-      createdAt: new Date("2023-02-10"),
-      expiresAt: new Date("2023-03-10"),
-    },
-  ]);
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
 
   const [selectedForm, setSelectedForm] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState("");
 
-<<<<<<< HEAD
   // Filter forms based on search term
   const filteredForms = forms.filter(
     (form) =>
@@ -315,38 +214,12 @@ const FormsPage = () => {
         title: "Error",
         description: "Failed to activate form. Please try again.",
         variant: "destructive",
-=======
-  const handleActivateForm = async (id: string) => {
-    try {
-      await updateData('forms', id, { status: 'active' });
-      
-      // Find the form in archived forms
-      const formToActivate = archivedForms.find(form => form.id === id);
-      if (formToActivate) {
-        // Update local state
-        const updatedForm = { ...formToActivate, status: 'active' };
-        setForms([...forms, updatedForm]);
-        setArchivedForms(archivedForms.filter(form => form.id !== id));
-        
-        toast({
-          title: "Success",
-          description: "Form activated successfully"
-        });
-      }
-    } catch (error) {
-      console.error('Error activating form:', error);
-      toast({
-        title: "Error",
-        description: "Failed to activate form. Please try again.",
-        variant: "destructive"
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
       });
     }
   };
 
   const handleDeactivateForm = async (id: string) => {
     try {
-<<<<<<< HEAD
       await updateData("forms", id, { status: "inactive" });
 
       // Find the form in active forms
@@ -368,36 +241,12 @@ const FormsPage = () => {
         title: "Error",
         description: "Failed to deactivate form. Please try again.",
         variant: "destructive",
-=======
-      await updateData('forms', id, { status: 'inactive' });
-      
-      // Find the form in active forms
-      const formToDeactivate = forms.find(form => form.id === id);
-      if (formToDeactivate) {
-        // Update local state
-        const updatedForm = { ...formToDeactivate, status: 'inactive' };
-        setArchivedForms([...archivedForms, updatedForm]);
-        setForms(forms.filter(form => form.id !== id));
-        
-        toast({
-          title: "Success",
-          description: "Form deactivated successfully"
-        });
-      }
-    } catch (error) {
-      console.error('Error deactivating form:', error);
-      toast({
-        title: "Error",
-        description: "Failed to deactivate form. Please try again.",
-        variant: "destructive"
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
       });
     }
   };
 
   const handleDeleteForm = async (id: string) => {
     try {
-<<<<<<< HEAD
       await deleteData("forms", id);
 
       // Update local state
@@ -414,24 +263,6 @@ const FormsPage = () => {
         title: "Error",
         description: "Failed to delete form. Please try again.",
         variant: "destructive",
-=======
-      await deleteData('forms', id);
-      
-      // Update local state
-      setForms(forms.filter(form => form.id !== id));
-      setArchivedForms(archivedForms.filter(form => form.id !== id));
-      
-      toast({
-        title: "Success",
-        description: "Form deleted successfully"
-      });
-    } catch (error) {
-      console.error('Error deleting form:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete form. Please try again.",
-        variant: "destructive"
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
       });
     }
   };
@@ -473,17 +304,12 @@ const FormsPage = () => {
   const handleFormSubmit = async (data: any) => {
     try {
       setIsLoading(true);
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
       const formData = {
         title: data.title || `Evaluation Form ${forms.length + 1}`,
         questionnaire_id: data.questionnaire,
         section: data.section,
         status: data.isActive ? "active" : "inactive",
-<<<<<<< HEAD
         expires_at: data.endDate?.toISOString(),
         created_at: data.startDate?.toISOString() || new Date().toISOString(),
       };
@@ -497,21 +323,11 @@ const FormsPage = () => {
           questionnaires.find((q) => q.id === data.questionnaire)?.title ||
           "Unknown Questionnaire";
 
-=======
-        expires_at: data.endDate?.toISOString()
-      };
-      
-      if (selectedForm) {
-        // Update existing form
-        await updateData('forms', selectedForm.id, formData);
-        
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
         const updatedForm = {
           ...selectedForm,
           ...{
             title: data.title,
             questionnaire: data.questionnaire,
-<<<<<<< HEAD
             questionnaireName,
             section: data.section,
             status: data.isActive ? "active" : "inactive",
@@ -552,37 +368,10 @@ const FormsPage = () => {
             questionnaires.find((q) => q.id === data.questionnaire)?.title ||
             "Unknown Questionnaire";
 
-=======
-            section: data.section,
-            status: data.isActive ? "active" : "inactive",
-            expiresAt: data.endDate
-          }
-        };
-        
-        // Update local state based on status
-        if (data.isActive) {
-          setForms(forms.map(form => form.id === selectedForm.id ? updatedForm : form));
-          setArchivedForms(archivedForms.filter(form => form.id !== selectedForm.id));
-        } else {
-          setArchivedForms(archivedForms.map(form => form.id === selectedForm.id ? updatedForm : form));
-          setForms(forms.filter(form => form.id !== selectedForm.id));
-        }
-        
-        toast({
-          title: "Success",
-          description: "Form updated successfully"
-        });
-      } else {
-        // Add new form
-        const result = await insertData('forms', formData);
-        
-        if (result && result.length > 0) {
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
           const newForm = {
             id: result[0].id,
             title: data.title || `Evaluation Form ${forms.length + 1}`,
             questionnaire: data.questionnaire,
-<<<<<<< HEAD
             questionnaireName,
             section: data.section,
             status: data.isActive ? "active" : "inactive",
@@ -591,49 +380,25 @@ const FormsPage = () => {
             expiresAt: data.endDate,
           };
 
-=======
-            section: data.section,
-            status: data.isActive ? "active" : "inactive",
-            responses: 0,
-            createdAt: new Date(),
-            expiresAt: data.endDate
-          };
-          
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
           // Add to appropriate list based on status
           if (data.isActive) {
             setForms([...forms, newForm]);
           } else {
             setArchivedForms([...archivedForms, newForm]);
           }
-<<<<<<< HEAD
 
           toast({
             title: "Success",
             description: "New form created successfully",
-=======
-          
-          toast({
-            title: "Success",
-            description: "New form created successfully"
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
           });
         }
       }
     } catch (error) {
-<<<<<<< HEAD
       console.error("Error saving form:", error);
       toast({
         title: "Error",
         description: "Failed to save form. Please try again.",
         variant: "destructive",
-=======
-      console.error('Error saving form:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save form. Please try again.",
-        variant: "destructive"
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
       });
     } finally {
       setIsLoading(false);

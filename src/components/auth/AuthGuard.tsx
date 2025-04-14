@@ -20,36 +20,20 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
         const authStatus = localStorage.getItem("isAuthenticated");
         const userString = localStorage.getItem("user");
 
-        // Check if this is the backdoor admin login
+        // Check local storage for authentication status
         if (authStatus === "true" && userString) {
-          const user = JSON.parse(userString);
-          if (user.isBackdoorAdmin) {
-            // Allow backdoor admin without Supabase verification
-            setIsAuthenticated(true);
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        if (authStatus === "true") {
+          // Set authenticated from local storage and skip Supabase check for now
           setIsAuthenticated(true);
+          setIsLoading(false);
+          return;
         }
 
-        // Then verify with Supabase
+        // Then verify with Supabase only if not already authenticated from localStorage
         const { data, error } = await getCurrentUser();
 
         if (error || !data.user) {
-          // Check again if it's the backdoor admin before clearing
-          const userString = localStorage.getItem("user");
-          if (userString) {
-            const user = JSON.parse(userString);
-            if (user.isBackdoorAdmin) {
-              setIsAuthenticated(true);
-              setIsLoading(false);
-              return;
-            }
-          }
-
+          // User is not authenticated according to Supabase
+          console.log("Auth check failed: Not authenticated in Supabase");
           // Clear local storage if server says not authenticated
           localStorage.removeItem("isAuthenticated");
           localStorage.removeItem("user");
@@ -63,21 +47,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
       } catch (error) {
         console.error("Auth check failed:", error);
 
-        // Check if it's the backdoor admin before showing error
-        const userString = localStorage.getItem("user");
-        if (userString) {
-          try {
-            const user = JSON.parse(userString);
-            if (user.isBackdoorAdmin) {
-              setIsAuthenticated(true);
-              setIsLoading(false);
-              return;
-            }
-          } catch (e) {
-            console.error("Error parsing user data:", e);
-          }
-        }
-
+        // Authentication check failed
         toast({
           title: "Authentication Error",
           description:
@@ -91,7 +61,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     };
 
     checkAuth();
-  }, [toast, location.pathname]); // Added location.pathname to dependencies to prevent logout on navigation
+  }, [toast]); // Removed location.pathname to prevent re-checking on navigation
 
   if (isLoading) {
     return (

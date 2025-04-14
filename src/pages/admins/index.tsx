@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-<<<<<<< HEAD
 import {
   fetchData,
   insertData,
@@ -10,11 +9,6 @@ import {
 } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { UserPlus, Search } from "lucide-react";
-=======
-import { fetchData, insertData, updateData, deleteData } from "@/lib/supabase";
-import { useToast } from "@/components/ui/use-toast";
-import { UserPlus } from "lucide-react";
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,10 +30,7 @@ import { Input } from "@/components/ui/input";
 import AdminList from "@/components/admins/AdminList";
 import AdminForm from "@/components/admins/AdminForm";
 import BackButton from "@/components/ui/back-button";
-<<<<<<< HEAD
 import { useNavigate } from "react-router-dom";
-=======
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
 
 interface Admin {
   id: string;
@@ -55,7 +46,6 @@ const AdminsPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-<<<<<<< HEAD
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
@@ -86,19 +76,6 @@ const AdminsPage = () => {
         // Fetch admin data
         const data = await fetchData("admins");
 
-=======
-  const { toast } = useToast();
-
-  const [admins, setAdmins] = useState<Admin[]>([]);
-
-  // Fetch admins from Supabase
-  useEffect(() => {
-    const loadAdmins = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchData("admins");
-
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
         // Format the data
         const formattedData = data.map((item: any) => ({
           id: item.id,
@@ -169,7 +146,6 @@ const AdminsPage = () => {
       }
     };
 
-<<<<<<< HEAD
     checkUserAndLoadAdmins();
   }, [toast, navigate]);
 
@@ -180,10 +156,6 @@ const AdminsPage = () => {
       admin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       admin.role.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-=======
-    loadAdmins();
-  }, [toast]);
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
 
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
     useState(false);
@@ -213,15 +185,11 @@ const AdminsPage = () => {
         email: data.email,
         role: data.role,
         permissions,
-<<<<<<< HEAD
         password: data.password, // This will be used for new admins only
-=======
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
       };
 
       if (selectedAdmin) {
         // Update existing admin
-<<<<<<< HEAD
         // Remove password from update data if it's not provided
         const updatePayload = { ...adminData };
         if (!data.password) {
@@ -229,9 +197,6 @@ const AdminsPage = () => {
         }
 
         await updateData("admins", selectedAdmin.id, updatePayload);
-=======
-        await updateData("admins", selectedAdmin.id, adminData);
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
 
         setAdmins(
           admins.map((admin) => {
@@ -254,7 +219,6 @@ const AdminsPage = () => {
         });
       } else {
         // Create new admin
-<<<<<<< HEAD
         // For new admins, we need to create an auth user first
         try {
           // Create admin in the database
@@ -288,30 +252,6 @@ const AdminsPage = () => {
             title: "Error",
             description: "Failed to create admin account. Please try again.",
             variant: "destructive",
-=======
-        const result = await insertData("admins", {
-          ...adminData,
-          status: "active",
-          last_login: new Date().toISOString(),
-        });
-
-        if (result && result.length > 0) {
-          const newAdmin: Admin = {
-            id: result[0].id,
-            name: data.name,
-            email: data.email,
-            role: data.role,
-            status: "active",
-            lastLogin: new Date().toISOString(),
-            permissions,
-          };
-
-          setAdmins([...admins, newAdmin]);
-
-          toast({
-            title: "Success",
-            description: "New admin account created successfully",
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
           });
         }
       }

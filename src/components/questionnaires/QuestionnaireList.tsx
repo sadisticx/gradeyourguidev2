@@ -98,7 +98,9 @@ const QuestionnaireList: React.FC<QuestionnaireListProps> = ({
 
   const confirmDelete = () => {
     if (selectedQuestionnaire) {
+      // Call the onDelete function with the questionnaire ID
       onDelete(selectedQuestionnaire.id);
+      // Close the dialog and reset the selected questionnaire
       setDeleteDialogOpen(false);
       setSelectedQuestionnaire(null);
     }
@@ -107,10 +109,13 @@ const QuestionnaireList: React.FC<QuestionnaireListProps> = ({
   const confirmArchive = () => {
     if (selectedQuestionnaire) {
       if (selectedQuestionnaire.status === "archived") {
+        // Call the onActivate function with the questionnaire ID
         onActivate(selectedQuestionnaire.id);
       } else {
+        // Call the onArchive function with the questionnaire ID
         onArchive(selectedQuestionnaire.id);
       }
+      // Close the dialog and reset the selected questionnaire
       setArchiveDialogOpen(false);
       setSelectedQuestionnaire(null);
     }
@@ -165,11 +170,7 @@ const QuestionnaireList: React.FC<QuestionnaireListProps> = ({
             ) : questionnaires.length === 0 ? (
               <TableRow>
                 <TableCell
-<<<<<<< HEAD
                   colSpan={8}
-=======
-                  colSpan={7}
->>>>>>> 88aa6c009c924915bc547b81baa3eba92061fd2e
                   className="text-center py-6 text-muted-foreground"
                 >
                   <div className="flex flex-col items-center justify-center p-8">
