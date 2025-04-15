@@ -127,8 +127,15 @@ const AdminForm = ({
   });
 
   const handleSubmit = (values: FormValues) => {
+    console.log("AdminForm - handleSubmit called with values:", values);
     if (onSubmit) {
-      onSubmit(values);
+      try {
+        onSubmit(values);
+      } catch (error) {
+        console.error("Error in admin form submission:", error);
+      }
+    } else {
+      console.warn("No onSubmit handler provided to AdminForm");
     }
   };
 

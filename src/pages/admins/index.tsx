@@ -214,6 +214,10 @@ const AdminsPage = () => {
   };
 
   const handleFormSubmit = async (data: any) => {
+    console.log(
+      "Admin form submitted with data:",
+      JSON.stringify(data, null, 2),
+    );
     try {
       setIsLoading(true);
 
@@ -263,12 +267,29 @@ const AdminsPage = () => {
         // Create new admin
         // For new admins, we need to create an auth user first
         try {
+          console.log("Creating new admin with data:", adminData);
+
+          // First, create the auth user if we're not in demo mode
+          let authUserId = null;
+          try {
+            // This is a simplified approach - in a real app, you'd use Supabase auth
+            // For demo purposes, we'll just create the admin record
+            console.log("Skipping auth user creation in demo mode");
+          } catch (authError) {
+            console.error("Error creating auth user:", authError);
+            // Continue anyway for demo purposes
+          }
+
           // Create admin in the database
-          const result = await insertData("admins", {
+          const adminRecord = {
             ...adminData,
+            auth_user_id: authUserId,
             status: "active",
             last_login: new Date().toISOString(),
-          });
+          };
+
+          console.log("Inserting admin record:", adminRecord);
+          const result = await insertData("admins", adminRecord);
 
           if (result && result.length > 0) {
             const newAdmin: Admin = {

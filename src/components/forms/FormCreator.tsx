@@ -98,11 +98,34 @@ const FormCreator = ({
             setAvailableDepartments(deptData);
           } else {
             // Default departments if none found
-            setAvailableDepartments([
-              { id: "1", name: "Computer Science", code: "CS" },
-              { id: "2", name: "Information Technology", code: "IT" },
-              { id: "3", name: "Engineering", code: "ENG" },
-            ]);
+            const defaultDepartments = [
+              {
+                id: "1",
+                name: "BSIT",
+                code: "BSIT",
+                fullName: "Bachelor of Science in Information Technology",
+              },
+              {
+                id: "2",
+                name: "BAPS",
+                code: "BAPS",
+                fullName: "Bachelor of Arts in Political Science",
+              },
+              {
+                id: "3",
+                name: "BSA",
+                code: "BSA",
+                fullName: "Bachelor of Science in Accountancy",
+              },
+              {
+                id: "4",
+                name: "BSBA-MM",
+                code: "BSBA",
+                fullName:
+                  "Bachelor of Science in Business Administration, Major in Marketing Management",
+              },
+            ];
+            setAvailableDepartments(defaultDepartments);
           }
         } else {
           setAvailableDepartments(departments);
@@ -118,63 +141,106 @@ const FormCreator = ({
               department_id: section.department_id,
             }));
             setAvailableSections(formattedSections);
-            setFilteredSections(formattedSections);
+            // Don't set filtered sections here to prevent flickering
           } else {
-            // Default sections if none found
-            const defaultSections = [
-              {
-                id: "101",
-                name: "CS101-A: Introduction to Programming",
-                department_id: "1",
-              },
-              {
-                id: "102",
-                name: "CS201-B: Data Structures",
-                department_id: "1",
-              },
-              {
-                id: "103",
-                name: "IT301-C: Web Development",
-                department_id: "2",
-              },
-              {
-                id: "104",
-                name: "ENG401-D: Software Engineering",
-                department_id: "3",
-              },
-            ];
+            // Default sections if none found - create sections for each department (1A-1D to 4A-4D)
+            const defaultSections = [];
+            const years = [1, 2, 3, 4];
+            const sectionLetters = ["A", "B", "C", "D"];
+            let sectionId = 1;
+
+            // For each department
+            for (let deptId = 1; deptId <= 4; deptId++) {
+              // For each year
+              years.forEach((year) => {
+                // For each section letter
+                sectionLetters.forEach((letter) => {
+                  defaultSections.push({
+                    id: `${sectionId}`,
+                    name: `${year}${letter}`,
+                    department_id: `${deptId}`,
+                  });
+                  sectionId++;
+                });
+              });
+            }
+
             setAvailableSections(defaultSections);
-            setFilteredSections(defaultSections);
+            // Don't set filtered sections here to prevent flickering
           }
         } else {
           setAvailableSections(sections);
-          setFilteredSections(sections);
+          // Don't set filtered sections here to prevent flickering
         }
       } catch (error) {
         console.error("Error loading data:", error);
         // Set default data if error
-        setAvailableDepartments([
-          { id: "1", name: "Computer Science", code: "CS" },
-          { id: "2", name: "Information Technology", code: "IT" },
-          { id: "3", name: "Engineering", code: "ENG" },
-        ]);
-
-        const defaultSections = [
+        const defaultDepartments = [
           {
-            id: "101",
-            name: "CS101-A: Introduction to Programming",
-            department_id: "1",
+            id: "1",
+            name: "BSIT",
+            code: "BSIT",
+            fullName: "Bachelor of Science in Information Technology",
           },
-          { id: "102", name: "CS201-B: Data Structures", department_id: "1" },
-          { id: "103", name: "IT301-C: Web Development", department_id: "2" },
           {
-            id: "104",
-            name: "ENG401-D: Software Engineering",
-            department_id: "3",
+            id: "2",
+            name: "BAPS",
+            code: "BAPS",
+            fullName: "Bachelor of Arts in Political Science",
+          },
+          {
+            id: "3",
+            name: "BSA",
+            code: "BSA",
+            fullName: "Bachelor of Science in Accountancy",
+          },
+          {
+            id: "4",
+            name: "BSBA-MM",
+            code: "BSBA",
+            fullName:
+              "Bachelor of Science in Business Administration, Major in Marketing Management",
           },
         ];
+        setAvailableDepartments(defaultDepartments);
+
+        // Create default sections for each department (1A-1D to 4A-4D)
+        const defaultSections = [];
+        const years = [1, 2, 3, 4];
+        const sectionLetters = ["A", "B", "C", "D"];
+        let sectionId = 1;
+
+        // For each department
+        for (let deptId = 1; deptId <= 4; deptId++) {
+          // For each year
+          years.forEach((year) => {
+            // For each section letter
+            sectionLetters.forEach((letter) => {
+              defaultSections.push({
+                id: `${sectionId}`,
+                name: `${year}${letter}`,
+                department_id: `${deptId}`,
+              });
+              sectionId++;
+            });
+          });
+        }
+
         setAvailableSections(defaultSections);
-        setFilteredSections(defaultSections);
+        // Don't set filtered sections here to prevent flickering
+      }
+
+      // Set initial filtered sections based on the current department value
+      const currentDept = form.getValues("department");
+      if (currentDept && currentDept !== "all-departments") {
+        // Filter sections for the selected department
+        const deptSections = availableSections.filter(
+          (section) => section.department_id === currentDept,
+        );
+        setFilteredSections(deptSections.length > 0 ? deptSections : []);
+      } else {
+        // Show all sections when no department is selected
+        setFilteredSections(availableSections);
       }
     };
 
@@ -231,36 +297,12 @@ const FormCreator = ({
         },
   });
 
-  // Filter sections when department changes
-  useEffect(() => {
-    const selectedDepartment = form.getValues("department");
-
-    if (selectedDepartment && selectedDepartment !== "all-departments") {
-      // Only filter if we have a specific department selected
-      const filtered = availableSections.filter(
-        (section) => section.department_id === selectedDepartment,
-      );
-
-      // Update filtered sections
-      setFilteredSections(filtered.length > 0 ? filtered : []);
-
-      // If the current selected section is not in the filtered list, reset it
-      const currentSection = form.getValues("section");
-      const sectionExists = filtered.some(
-        (section) => section.id === currentSection,
-      );
-
-      if (!sectionExists && filtered.length > 0) {
-        form.setValue("section", filtered[0].id || `temp-section-0`);
-      }
-    } else {
-      // Show all sections when "All Departments" is selected
-      setFilteredSections(availableSections);
-    }
-  }, [form.watch("department"), availableSections]);
+  // Remove the useEffect hook that was causing flickering
+  // We'll handle section filtering directly in the department selection handler
 
   const handleSubmit = (values: FormValues) => {
     console.log("Form submitted with values:", values);
+    console.log("Form values structure:", JSON.stringify(values, null, 2));
     setIsLoading(true);
 
     try {
@@ -296,10 +338,19 @@ const FormCreator = ({
 
       // Call the onSubmit prop if provided
       if (onSubmit) {
-        console.log("Calling parent onSubmit function");
+        console.log(
+          "Calling parent onSubmit function with data:",
+          updatedValues,
+        );
         onSubmit(updatedValues);
       } else {
         console.warn("No onSubmit handler provided to FormCreator");
+        // Show a toast even if no onSubmit handler is provided
+        toast({
+          title: "Warning",
+          description: "Form handler not configured. Data cannot be saved.",
+          variant: "destructive",
+        });
       }
 
       toast({
@@ -343,8 +394,22 @@ const FormCreator = ({
         <Form {...form}>
           <form
             onSubmit={(e) => {
+              e.preventDefault(); // Prevent default form submission
               console.log("Form submit event triggered");
-              form.handleSubmit(handleSubmit)(e);
+              // Validate form before submission
+              form.trigger().then((isValid) => {
+                if (isValid) {
+                  console.log("Form is valid, submitting...");
+                  form.handleSubmit(handleSubmit)(e);
+                } else {
+                  console.log("Form validation failed");
+                  toast({
+                    title: "Validation Error",
+                    description: "Please check the form for errors.",
+                    variant: "destructive",
+                  });
+                }
+              });
             }}
             className="space-y-6"
           >
@@ -426,11 +491,16 @@ const FormCreator = ({
                         field.onChange(value);
 
                         // Immediately filter sections based on selected department
+                        // This is the key to preventing flickering - we update the filtered sections
+                        // synchronously when the department changes
                         if (value && value !== "all-departments") {
+                          // Create a new filtered array instead of modifying state directly
                           const filtered = availableSections.filter(
                             (section) => section.department_id === value,
                           );
                           console.log("Filtered sections:", filtered);
+
+                          // Update filtered sections state
                           setFilteredSections(
                             filtered.length > 0 ? filtered : [],
                           );
@@ -442,12 +512,13 @@ const FormCreator = ({
                           );
 
                           if (!sectionExists && filtered.length > 0) {
-                            form.setValue(
-                              "section",
-                              filtered[0].id || `temp-section-0`,
-                            );
+                            // Set the section value to the first filtered section
+                            setTimeout(() => {
+                              form.setValue("section", filtered[0].id);
+                            }, 0);
                           }
                         } else {
+                          // Show all sections when "All Departments" is selected
                           setFilteredSections(availableSections);
                         }
                       }}
@@ -468,7 +539,9 @@ const FormCreator = ({
                                 key={department.id || `dept-${index}`}
                                 value={department.id || `temp-dept-${index}`}
                               >
-                                {department.name || "Unnamed Department"}
+                                {department.fullName ||
+                                  department.name ||
+                                  "Unnamed Department"}
                               </SelectItem>
                             ))
                           : null}
