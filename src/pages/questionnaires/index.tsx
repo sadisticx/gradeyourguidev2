@@ -38,17 +38,34 @@ const QuestionnairesPage = () => {
       setIsLoading(true);
       try {
         const data = await fetchData("questionnaires");
-        // Convert string dates to Date objects
-        const formattedData = data.map((item: any) => ({
-          ...item,
-          createdAt: new Date(item.created_at || item.createdAt),
-          updatedAt: new Date(item.updated_at || item.updatedAt),
+        console.log("Raw questionnaire data from database:", data);
+
+        // Convert string dates to Date objects and parse sections
+        const formattedData = data.map((item: any) => {
+          let parsedSections = [];
+
           // Parse sections JSON if it's stored as a string
-          sections:
-            typeof item.sections === "string"
-              ? JSON.parse(item.sections)
-              : item.sections || [],
-        }));
+          if (typeof item.sections === "string") {
+            try {
+              parsedSections = JSON.parse(item.sections);
+            } catch (e) {
+              console.error("Error parsing sections JSON:", e);
+              parsedSections = [];
+            }
+          } else if (Array.isArray(item.sections)) {
+            parsedSections = item.sections;
+          }
+
+          return {
+            ...item,
+            createdAt: new Date(item.created_at || item.createdAt),
+            updatedAt: new Date(item.updated_at || item.updatedAt),
+            sections: parsedSections,
+            isUsedInForm: item.is_used_in_form || item.isUsedInForm || false,
+          };
+        });
+
+        console.log("Formatted questionnaire data:", formattedData);
         setQuestionnaires(formattedData);
       } catch (error) {
         console.error("Error fetching questionnaires:", error);
@@ -92,11 +109,19 @@ const QuestionnairesPage = () => {
   const handleViewQuestionnaire = (id: string) => {
     setSelectedQuestionnaireId(id);
     setActiveTab("view");
+    console.log(
+      "Viewing questionnaire:",
+      questionnaires.find((q) => q.id === id),
+    );
   };
 
   const handleEditQuestionnaire = (id: string) => {
     setSelectedQuestionnaireId(id);
     setActiveTab("edit");
+    console.log(
+      "Editing questionnaire:",
+      questionnaires.find((q) => q.id === id),
+    );
   };
 
   const handleDeleteQuestionnaire = async (id: string) => {
@@ -121,18 +146,24 @@ const QuestionnairesPage = () => {
     const now = new Date();
     setIsLoading(true);
 
+    // Make sure sections is properly structured before saving
+    const processedData = {
+      ...data,
+      // Ensure sections is an array with proper structure
+      sections: Array.isArray(data.sections) ? data.sections : [],
+    };
+
     try {
       if (selectedQuestionnaireId) {
         // Update existing questionnaire
         const updatedData = {
-          ...data,
+          ...processedData,
           updated_at: now.toISOString(),
-          // Convert sections to JSON string if needed by your database schema
-          sections:
-            typeof data.sections === "object"
-              ? JSON.stringify(data.sections)
-              : data.sections,
+          // Convert sections to JSON string for database storage
+          sections: JSON.stringify(processedData.sections),
         };
+
+        console.log("Updating questionnaire with data:", updatedData);
 
         const updatedQuestionnaire = await updateData(
           "questionnaires",
@@ -145,7 +176,7 @@ const QuestionnairesPage = () => {
             if (q.id === selectedQuestionnaireId) {
               return {
                 ...q,
-                ...data,
+                ...processedData,
                 updatedAt: now,
               };
             }
@@ -160,16 +191,18 @@ const QuestionnairesPage = () => {
       } else {
         // Create new questionnaire
         const newQuestionnaireData = {
-          ...data,
+          ...processedData,
           status: "draft",
           created_at: now.toISOString(),
           updated_at: now.toISOString(),
-          // Convert sections to JSON string if needed by your database schema
-          sections:
-            typeof data.sections === "object"
-              ? JSON.stringify(data.sections)
-              : data.sections,
+          // Convert sections to JSON string for database storage
+          sections: JSON.stringify(processedData.sections),
         };
+
+        console.log(
+          "Creating new questionnaire with data:",
+          newQuestionnaireData,
+        );
 
         const insertedQuestionnaire = await insertData(
           "questionnaires",
@@ -181,11 +214,9 @@ const QuestionnairesPage = () => {
             ...insertedQuestionnaire[0],
             createdAt: now,
             updatedAt: now,
-            // Parse sections back to object if needed
-            sections:
-              typeof insertedQuestionnaire[0].sections === "string"
-                ? JSON.parse(insertedQuestionnaire[0].sections)
-                : insertedQuestionnaire[0].sections || [],
+            // Store the original sections data in the state
+            sections: processedData.sections,
+            isUsedInForm: false,
           };
 
           setQuestionnaires([...questionnaires, newQuestionnaire]);
@@ -285,33 +316,37 @@ const QuestionnairesPage = () => {
 
           <TabsContent value="edit">
             <QuestionnaireBuilder
-              initialData={{
-                title: "Edit Existing Questionnaire",
-                description:
-                  "This is a placeholder for editing an existing questionnaire",
-                sections: [
-                  {
-                    id: "1",
-                    title: "Teaching Effectiveness",
-                    description:
-                      "Evaluate the instructor's teaching methods and effectiveness",
-                    questions: [
-                      {
-                        id: "1-1",
-                        text: "How would you rate the instructor's clarity in explaining course concepts?",
-                        type: "rating",
-                        required: true,
-                      },
-                      {
-                        id: "1-2",
-                        text: "What aspects of the teaching could be improved?",
-                        type: "text",
-                        required: true,
-                      },
-                    ],
-                  },
-                ],
-              }}
+              initialData={
+                questionnaires.find(
+                  (q) => q.id === selectedQuestionnaireId,
+                ) || {
+                  title: "Edit Existing Questionnaire",
+                  description:
+                    "This is a placeholder for editing an existing questionnaire",
+                  sections: [
+                    {
+                      id: "1",
+                      title: "Teaching Effectiveness",
+                      description:
+                        "Evaluate the instructor's teaching methods and effectiveness",
+                      questions: [
+                        {
+                          id: "1-1",
+                          text: "How would you rate the instructor's clarity in explaining course concepts?",
+                          type: "rating",
+                          required: true,
+                        },
+                        {
+                          id: "1-2",
+                          text: "What aspects of the teaching could be improved?",
+                          type: "text",
+                          required: true,
+                        },
+                      ],
+                    },
+                  ],
+                }
+              }
               onSave={handleSaveQuestionnaire}
             />
           </TabsContent>
@@ -324,71 +359,87 @@ const QuestionnairesPage = () => {
                 sections and questions but cannot edit them.
               </p>
 
-              <div className="border-t pt-4 mt-4">
-                <h3 className="text-xl font-semibold mb-2">
-                  End of Semester Evaluation
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Standard evaluation form for end of semester feedback
-                </p>
+              {selectedQuestionnaireId && (
+                <div className="border-t pt-4 mt-4">
+                  {(() => {
+                    const questionnaire = questionnaires.find(
+                      (q) => q.id === selectedQuestionnaireId,
+                    );
+                    if (!questionnaire) return <p>Questionnaire not found</p>;
 
-                <div className="space-y-8">
-                  <div className="border rounded-md p-4">
-                    <h4 className="text-lg font-medium mb-2">
-                      Teaching Quality
-                    </h4>
-                    <div className="space-y-4">
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="font-medium">
-                          How would you rate the overall teaching quality?
+                    return (
+                      <>
+                        <h3 className="text-xl font-semibold mb-2">
+                          {questionnaire.title || "Untitled Questionnaire"}
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                          {questionnaire.description ||
+                            "No description provided"}
                         </p>
-                        <div className="mt-2 flex items-center gap-4">
-                          <span className="text-sm text-gray-500">
-                            Rating question (1-5)
-                          </span>
-                        </div>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="font-medium">
-                          What aspects of teaching could be improved?
-                        </p>
-                        <div className="mt-2 flex items-center gap-4">
-                          <span className="text-sm text-gray-500">
-                            Text response
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="border rounded-md p-4">
-                    <h4 className="text-lg font-medium mb-2">Course Content</h4>
-                    <div className="space-y-4">
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="font-medium">
-                          Was the course content relevant to your learning
-                          goals?
-                        </p>
-                        <div className="mt-2 flex items-center gap-4">
-                          <span className="text-sm text-gray-500">
-                            Rating question (1-5)
-                          </span>
+                        <div className="space-y-8">
+                          {questionnaire.sections &&
+                          questionnaire.sections.length > 0 ? (
+                            questionnaire.sections.map((section, sIndex) => (
+                              <div
+                                key={section.id || sIndex}
+                                className="border rounded-md p-4"
+                              >
+                                <h4 className="text-lg font-medium mb-2">
+                                  {section.title || `Section ${sIndex + 1}`}
+                                </h4>
+                                {section.description && (
+                                  <p className="text-gray-600 mb-4">
+                                    {section.description}
+                                  </p>
+                                )}
+                                <div className="space-y-4">
+                                  {section.questions &&
+                                  section.questions.length > 0 ? (
+                                    section.questions.map(
+                                      (question, qIndex) => (
+                                        <div
+                                          key={question.id || qIndex}
+                                          className="bg-gray-50 p-3 rounded"
+                                        >
+                                          <p className="font-medium">
+                                            {question.text ||
+                                              `Question ${qIndex + 1}`}
+                                          </p>
+                                          <div className="mt-2 flex items-center gap-4">
+                                            <span className="text-sm text-gray-500">
+                                              {question.type === "rating"
+                                                ? "Rating question (1-5)"
+                                                : "Text response"}
+                                            </span>
+                                            {question.required && (
+                                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                                Required
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ),
+                                    )
+                                  ) : (
+                                    <p className="text-muted-foreground">
+                                      No questions in this section
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-muted-foreground">
+                              This questionnaire has no sections
+                            </p>
+                          )}
                         </div>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="font-medium">
-                          What topics would you like to see added or removed?
-                        </p>
-                        <div className="mt-2 flex items-center gap-4">
-                          <span className="text-sm text-gray-500">
-                            Text response
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                      </>
+                    );
+                  })()}
                 </div>
-              </div>
+              )}
 
               <div className="mt-8 flex justify-end space-x-4">
                 <Button variant="outline" onClick={handleBackToList}>

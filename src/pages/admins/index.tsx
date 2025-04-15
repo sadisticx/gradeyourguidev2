@@ -58,20 +58,62 @@ const AdminsPage = () => {
     const checkUserAndLoadAdmins = async () => {
       setIsLoading(true);
       try {
-        // Check if user is authenticated
-        const { data: userData, error: userError } = await getCurrentUser();
+        // Check if user is authenticated from localStorage first
+        const authStatus = localStorage.getItem("isAuthenticated");
+        const userString = localStorage.getItem("user");
 
-        if (userError || !userData.user) {
-          toast({
-            title: "Authentication Error",
-            description: "You must be logged in to access this page.",
-            variant: "destructive",
-          });
-          navigate("/login");
-          return;
+        // If using backdoor login, skip the Supabase check
+        if (authStatus === "true" && userString) {
+          try {
+            const user = JSON.parse(userString);
+            if (user.email === "admin@faculty-eval.com") {
+              // Backdoor admin user - skip Supabase check
+              setCurrentUser(user);
+              console.log("Using backdoor admin account");
+            } else {
+              // Regular user - verify with Supabase
+              const { data: userData, error: userError } =
+                await getCurrentUser();
+              if (userError || !userData.user) {
+                toast({
+                  title: "Authentication Error",
+                  description: "You must be logged in to access this page.",
+                  variant: "destructive",
+                });
+                navigate("/login");
+                return;
+              }
+              setCurrentUser(userData.user);
+            }
+          } catch (e) {
+            console.error("Error parsing user data:", e);
+            // Continue with Supabase check as fallback
+            const { data: userData, error: userError } = await getCurrentUser();
+            if (userError || !userData.user) {
+              toast({
+                title: "Authentication Error",
+                description: "You must be logged in to access this page.",
+                variant: "destructive",
+              });
+              navigate("/login");
+              return;
+            }
+            setCurrentUser(userData.user);
+          }
+        } else {
+          // No local storage data, check with Supabase
+          const { data: userData, error: userError } = await getCurrentUser();
+          if (userError || !userData.user) {
+            toast({
+              title: "Authentication Error",
+              description: "You must be logged in to access this page.",
+              variant: "destructive",
+            });
+            navigate("/login");
+            return;
+          }
+          setCurrentUser(userData.user);
         }
-
-        setCurrentUser(userData.user);
 
         // Fetch admin data
         const data = await fetchData("admins");

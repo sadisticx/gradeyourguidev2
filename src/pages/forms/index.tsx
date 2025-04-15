@@ -30,21 +30,38 @@ const FormsPage = () => {
   const [forms, setForms] = useState<any[]>([]);
   const [archivedForms, setArchivedForms] = useState<any[]>([]);
   const [questionnaires, setQuestionnaires] = useState<
-    { id: string; title: string }[]
+    { id: string; title: string; isUsedInForm?: boolean }[]
+  >([]);
+  const [departments, setDepartments] = useState<
+    { id: string; name: string; code: string }[]
   >([]);
 
-  // Fetch forms and questionnaires from Supabase
+  // Fetch forms, questionnaires, and departments from Supabase
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        // Fetch questionnaires first with full data
+        // Fetch departments
+        const departmentData = await fetchData("departments");
+        if (departmentData && departmentData.length > 0) {
+          setDepartments(departmentData);
+        } else {
+          // Default departments if none found
+          setDepartments([
+            { id: "1", name: "Computer Science", code: "CS" },
+            { id: "2", name: "Information Technology", code: "IT" },
+            { id: "3", name: "Engineering", code: "ENG" },
+          ]);
+        }
+
+        // Fetch questionnaires with full data
         const questionnaireData = await fetchData("questionnaires");
         console.log("Fetched questionnaires:", questionnaireData);
         const formattedQuestionnaires = questionnaireData.map((item: any) => ({
           id: item.id,
           title: item.title || "Untitled Questionnaire",
           sections: item.sections || [],
+          isUsedInForm: item.isUsedInForm || false,
         }));
         setQuestionnaires(formattedQuestionnaires);
 
@@ -302,6 +319,7 @@ const FormsPage = () => {
   };
 
   const handleFormSubmit = async (data: any) => {
+    console.log("Form submission received in FormsPage:", data);
     try {
       setIsLoading(true);
 
@@ -309,6 +327,7 @@ const FormsPage = () => {
         title: data.title || `Evaluation Form ${forms.length + 1}`,
         questionnaire_id: data.questionnaire,
         section: data.section,
+        department_id: data.department || null,
         status: data.isActive ? "active" : "inactive",
         expires_at: data.endDate?.toISOString(),
         created_at: data.startDate?.toISOString() || new Date().toISOString(),
@@ -330,6 +349,7 @@ const FormsPage = () => {
             questionnaire: data.questionnaire,
             questionnaireName,
             section: data.section,
+            department_id: data.department,
             status: data.isActive ? "active" : "inactive",
             expiresAt: data.endDate,
           },
@@ -374,6 +394,7 @@ const FormsPage = () => {
             questionnaire: data.questionnaire,
             questionnaireName,
             section: data.section,
+            department_id: data.department,
             status: data.isActive ? "active" : "inactive",
             responses: 0,
             createdAt: data.startDate || new Date(),
@@ -385,6 +406,25 @@ const FormsPage = () => {
             setForms([...forms, newForm]);
           } else {
             setArchivedForms([...archivedForms, newForm]);
+          }
+
+          // Update questionnaire to mark it as used in a form
+          try {
+            await updateData("questionnaires", data.questionnaire, {
+              isUsedInForm: true,
+            });
+
+            // Update local state for questionnaires
+            setQuestionnaires(
+              questionnaires.map((q) => {
+                if (q.id === data.questionnaire) {
+                  return { ...q, isUsedInForm: true };
+                }
+                return q;
+              }),
+            );
+          } catch (err) {
+            console.error("Error updating questionnaire status:", err);
           }
 
           toast({
@@ -494,6 +534,7 @@ const FormsPage = () => {
             onSubmit={handleFormSubmit}
             initialData={selectedForm}
             questionnaires={questionnaires}
+            departments={departments}
           />
         </div>
       )}

@@ -49,6 +49,44 @@ const SectionsPage = () => {
         setSections(sectionsWithDepartment);
         setFilteredSections(sectionsWithDepartment);
 
+        // Fetch instructors with department info
+        const instructorData = await fetchData("instructors");
+        const instructorsWithDetails = instructorData.map((instructor) => {
+          const department = departmentData.find(
+            (d) => d.id === instructor.department_id,
+          );
+          return {
+            ...instructor,
+            departmentName: department ? department.name : "Unknown Department",
+            sections: [], // Will be populated with section data later
+          };
+        });
+
+        // Fetch section-instructor relationships
+        const sectionInstructorData = await fetchData("section_instructors");
+
+        // Map sections to instructors
+        const instructorsWithSections = instructorsWithDetails.map(
+          (instructor) => {
+            const assignedSections = sectionInstructorData
+              .filter((si) => si.instructor_id === instructor.id)
+              .map((si) => {
+                const section = sectionsWithDepartment.find(
+                  (s) => s.id === si.section_id,
+                );
+                return section || null;
+              })
+              .filter(Boolean);
+
+            return {
+              ...instructor,
+              sections: assignedSections,
+            };
+          },
+        );
+
+        setInstructors(instructorsWithSections);
+
         toast({
           title: "Success",
           description: "Data loaded successfully",
@@ -95,6 +133,27 @@ const SectionsPage = () => {
         ];
         setSections(defaultSections);
         setFilteredSections(defaultSections);
+
+        // Set default instructors
+        const defaultInstructors = [
+          {
+            id: "201",
+            name: "Dr. John Smith",
+            email: "john.smith@example.com",
+            department_id: "1",
+            departmentName: "Computer Science",
+            sections: [defaultSections[0], defaultSections[1]],
+          },
+          {
+            id: "202",
+            name: "Prof. Jane Doe",
+            email: "jane.doe@example.com",
+            department_id: "2",
+            departmentName: "Information Technology",
+            sections: [defaultSections[2]],
+          },
+        ];
+        setInstructors(defaultInstructors);
       } finally {
         setIsLoading(false);
       }
@@ -253,17 +312,14 @@ const SectionsPage = () => {
         </TabsContent>
 
         <TabsContent value="instructors" className="space-y-6">
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-lg font-semibold mb-2">Instructor Management</p>
-            <p className="text-muted-foreground mb-6">
-              Instructor management will be implemented in the next update.
-            </p>
+          <div className="flex justify-between items-center mb-4">
+            <div></div>
             <Button
               onClick={() => {
                 toast({
                   title: "Coming Soon",
                   description:
-                    "Instructor management will be implemented in the next update.",
+                    "Add instructor functionality will be implemented soon.",
                 });
               }}
             >
@@ -271,20 +327,34 @@ const SectionsPage = () => {
               Add New Instructor
             </Button>
           </div>
+
+          <InstructorsList
+            instructors={instructors}
+            onEdit={() => {
+              toast({
+                title: "Coming Soon",
+                description: "Instructor editing will be implemented soon.",
+              });
+            }}
+            onDelete={() => {
+              toast({
+                title: "Coming Soon",
+                description: "Instructor deletion will be implemented soon.",
+              });
+            }}
+            isLoading={isLoading}
+          />
         </TabsContent>
 
         <TabsContent value="departments" className="space-y-6">
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-lg font-semibold mb-2">Department Management</p>
-            <p className="text-muted-foreground mb-6">
-              Department management will be implemented in the next update.
-            </p>
+          <div className="flex justify-between items-center mb-4">
+            <div></div>
             <Button
               onClick={() => {
                 toast({
                   title: "Coming Soon",
                   description:
-                    "Department management will be implemented in the next update.",
+                    "Add department functionality will be implemented soon.",
                 });
               }}
             >
@@ -292,6 +362,23 @@ const SectionsPage = () => {
               Add New Department
             </Button>
           </div>
+
+          <DepartmentsList
+            departments={departments}
+            onEdit={() => {
+              toast({
+                title: "Coming Soon",
+                description: "Department editing will be implemented soon.",
+              });
+            }}
+            onDelete={() => {
+              toast({
+                title: "Coming Soon",
+                description: "Department deletion will be implemented soon.",
+              });
+            }}
+            isLoading={isLoading}
+          />
         </TabsContent>
       </Tabs>
     </div>
