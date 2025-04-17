@@ -4,20 +4,23 @@ import { useNavigate } from "react-router-dom";
 
 interface StudentEvaluationLinkProps {
   className?: string;
+  label?: string;
 }
 
 const StudentEvaluationLink = ({
   className = "",
+  label = "Access Student Evaluation Demo",
 }: StudentEvaluationLinkProps) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate("/student/evaluation/demo-form");
+    // Navigate to the demo form route
+    navigate("/demo-evaluation");
   };
 
   return (
     <Button onClick={handleClick} className={className} variant="default">
-      Access Student Evaluation Demo
+      {label}
     </Button>
   );
 };
