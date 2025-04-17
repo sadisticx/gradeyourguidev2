@@ -19,6 +19,7 @@ on Command Prompt:
 
 5. Access the Application: Open your web browser and navigate to the local server address provided in the terminal, typically http://localhost:3000 or http://localhost:5173.
 
+6. Or try publishing it
   <!--
 
 # React + TypeScript + Vite
