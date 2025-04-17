@@ -95,11 +95,10 @@ const LoginPage = () => {
             alt="Grade Your Guide Logo"
             className="mx-auto h-24 mb-4"
           />
-          <h1 className="text-2xl font-bold">Faculty Evaluation System</h1>
+          <h1 className="text-2xl font-bold">Grade Your Guide</h1>
           <p className="text-muted-foreground">Admin Portal</p>
           <p className="text-xs text-muted-foreground mt-2">
-            "Grade Your Guide" - Empowering educational excellence through
-            structured feedback
+            Faculty Evaluation System
           </p>
         </div>
 
