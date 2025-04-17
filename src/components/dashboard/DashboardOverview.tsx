@@ -30,7 +30,7 @@ const DashboardOverview = ({
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground mt-1">
-          Welcome to the Faculty Evaluation System dashboard.
+          Welcome to the Grade Your Guide dashboard.
         </p>
       </div>
 

@@ -90,9 +90,17 @@ const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="mx-auto h-12 w-12 rounded-md bg-primary mb-4"></div>
+          <img
+            src="/images/logo/grade-your-guide-logo.png"
+            alt="Grade Your Guide Logo"
+            className="mx-auto h-24 mb-4"
+          />
           <h1 className="text-2xl font-bold">Faculty Evaluation System</h1>
           <p className="text-muted-foreground">Admin Portal</p>
+          <p className="text-xs text-muted-foreground mt-2">
+            "Grade Your Guide" - Empowering educational excellence through
+            structured feedback
+          </p>
         </div>
 
         <Card className="w-full">

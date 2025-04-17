@@ -1,7 +1,7 @@
 import { Suspense, lazy } from "react";
 import { useRoutes, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./components/home";
-import routes from "tempo-routes";
+import routes from "virtual:generated-pages-react";
 import AuthGuard from "./components/auth/AuthGuard";
 import StudentPortalPage from "./pages/student";
 import StudentEvaluationPage from "./pages/student/evaluation";
@@ -26,6 +26,15 @@ function App() {
       <>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+
+          {/* Student routes - accessible without authentication */}
+          <Route path="/student" element={<StudentPortalPage />} />
+          <Route
+            path="/student/evaluation/:formId"
+            element={<StudentEvaluationPage />}
+          />
+          {/* Demo form direct access */}
+          <Route path="/demo-evaluation" element={<StudentEvaluationPage />} />
 
           {/* Protected routes */}
           <Route
@@ -77,17 +86,11 @@ function App() {
             }
           />
 
-          {/* Student routes */}
-          <Route path="/student" element={<StudentPortalPage />} />
-          <Route
-            path="/student/evaluation/:formId"
-            element={<StudentEvaluationPage />}
-          />
-
           {/* Catch all route */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-        {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
+        {/* Include dynamic routes */}
+        {useRoutes(routes)}
       </>
     </Suspense>
   );
