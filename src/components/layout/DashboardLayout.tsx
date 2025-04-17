@@ -73,7 +73,7 @@ const DashboardLayout = ({
         {/* Logo */}
         <div className="flex h-16 items-center gap-2 border-b px-6">
           <div className="h-8 w-8 rounded-md bg-primary"></div>
-          <h1 className="text-xl font-bold">Faculty Eval</h1>
+          <h1 className="text-xl font-bold">Grade Your Guide</h1>
         </div>
 
         {/* Navigation */}
