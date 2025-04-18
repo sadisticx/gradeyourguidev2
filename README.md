@@ -2,7 +2,7 @@
 # How to run this project?
 Note: Ensure you have Node.js installed on your system before executing these commands.
 ```node -v npm -v```
-
+```npmv run dev```
 on Command Prompt:
 
 1. Clone the repository
