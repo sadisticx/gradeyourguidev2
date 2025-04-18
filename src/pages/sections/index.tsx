@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import BackButton from "@/components/ui/back-button";
 import SectionsList from "@/components/sections/SectionsList";
+import InstructorsList from "@/components/sections/InstructorsList";
+import DepartmentsList from "@/components/sections/DepartmentsList";
 import {
   Select,
   SelectContent,
@@ -101,9 +103,27 @@ const SectionsPage = () => {
 
         // Set default departments
         const defaultDepartments = [
-          { id: "1", name: "Computer Science", code: "CS" },
-          { id: "2", name: "Information Technology", code: "IT" },
-          { id: "3", name: "Engineering", code: "ENG" },
+          {
+            id: "1",
+            name: "Bachelor of Science in Information Technology",
+            code: "BSIT",
+          },
+          {
+            id: "2",
+            name: "Bachelor of Science in Hospitality Management",
+            code: "BSHM",
+          },
+          {
+            id: "3",
+            name: "Bachelor of Science in Political Science",
+            code: "BSPOLSCI",
+          },
+          { id: "4", name: "Bachelor of Science in Education", code: "BSED" },
+          {
+            id: "5",
+            name: "Bachelor of Science in Business Administration",
+            code: "BSBA",
+          },
         ];
         setDepartments(defaultDepartments);
 
@@ -112,23 +132,37 @@ const SectionsPage = () => {
           {
             id: "101",
             name: "Introduction to Programming",
-            code: "CS101-A",
+            code: "BSIT101-A",
             department_id: "1",
-            departmentName: "Computer Science",
+            departmentName: "Bachelor of Science in Information Technology",
           },
           {
             id: "102",
-            name: "Data Structures",
-            code: "CS201-B",
-            department_id: "1",
-            departmentName: "Computer Science",
+            name: "Food and Beverage Service",
+            code: "BSHM101-A",
+            department_id: "2",
+            departmentName: "Bachelor of Science in Hospitality Management",
           },
           {
             id: "103",
-            name: "Web Development",
-            code: "IT102-C",
-            department_id: "2",
-            departmentName: "Information Technology",
+            name: "Political Theories",
+            code: "BSPOLSCI101-A",
+            department_id: "3",
+            departmentName: "Bachelor of Science in Political Science",
+          },
+          {
+            id: "104",
+            name: "Educational Psychology",
+            code: "BSED101-A",
+            department_id: "4",
+            departmentName: "Bachelor of Science in Education",
+          },
+          {
+            id: "105",
+            name: "Principles of Management",
+            code: "BSBA101-A",
+            department_id: "5",
+            departmentName: "Bachelor of Science in Business Administration",
           },
         ];
         setSections(defaultSections);
@@ -141,16 +175,40 @@ const SectionsPage = () => {
             name: "Dr. John Smith",
             email: "john.smith@example.com",
             department_id: "1",
-            departmentName: "Computer Science",
-            sections: [defaultSections[0], defaultSections[1]],
+            departmentName: "Bachelor of Science in Information Technology",
+            sections: [defaultSections[0]],
           },
           {
             id: "202",
             name: "Prof. Jane Doe",
             email: "jane.doe@example.com",
             department_id: "2",
-            departmentName: "Information Technology",
+            departmentName: "Bachelor of Science in Hospitality Management",
+            sections: [defaultSections[1]],
+          },
+          {
+            id: "203",
+            name: "Dr. Robert Johnson",
+            email: "robert.johnson@example.com",
+            department_id: "3",
+            departmentName: "Bachelor of Science in Political Science",
             sections: [defaultSections[2]],
+          },
+          {
+            id: "204",
+            name: "Prof. Maria Garcia",
+            email: "maria.garcia@example.com",
+            department_id: "4",
+            departmentName: "Bachelor of Science in Education",
+            sections: [defaultSections[3]],
+          },
+          {
+            id: "205",
+            name: "Dr. William Chen",
+            email: "william.chen@example.com",
+            department_id: "5",
+            departmentName: "Bachelor of Science in Business Administration",
+            sections: [defaultSections[4]],
           },
         ];
         setInstructors(defaultInstructors);

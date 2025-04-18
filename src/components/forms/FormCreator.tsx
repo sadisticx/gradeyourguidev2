@@ -38,6 +38,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
@@ -48,9 +49,9 @@ const formSchema = z.object({
     required_error: "Please select a questionnaire",
   }),
   department: z.string().optional(),
-  section: z.string({
-    required_error: "Please select a class section",
-  }),
+  sections: z
+    .array(z.string())
+    .min(1, { message: "Please select at least one section" }),
   startDate: z.date({
     required_error: "Start date is required",
   }),
@@ -87,7 +88,7 @@ const FormCreator = ({
   const [availableDepartments, setAvailableDepartments] = useState(departments);
   const { toast } = useToast();
 
-  // Fetch sections and departments if not provided
+  // Fetch sections, departments, and instructors if not provided
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -107,22 +108,27 @@ const FormCreator = ({
               },
               {
                 id: "2",
-                name: "BAPS",
-                code: "BAPS",
-                fullName: "Bachelor of Arts in Political Science",
+                name: "BSHM",
+                code: "BSHM",
+                fullName: "Bachelor of Science in Hospitality Management",
               },
               {
                 id: "3",
-                name: "BSA",
-                code: "BSA",
-                fullName: "Bachelor of Science in Accountancy",
+                name: "BSPOLSCI",
+                code: "BSPOLSCI",
+                fullName: "Bachelor of Science in Political Science",
               },
               {
                 id: "4",
-                name: "BSBA-MM",
+                name: "BSED",
+                code: "BSED",
+                fullName: "Bachelor of Science in Education",
+              },
+              {
+                id: "5",
+                name: "BSBA",
                 code: "BSBA",
-                fullName:
-                  "Bachelor of Science in Business Administration, Major in Marketing Management",
+                fullName: "Bachelor of Science in Business Administration",
               },
             ];
             setAvailableDepartments(defaultDepartments);
@@ -134,12 +140,29 @@ const FormCreator = ({
         // Load sections if not provided
         if (sections.length === 0) {
           const sectData = await fetchData("sections");
+          const instructorData = await fetchData("instructors");
+          const sectionInstructorData = await fetchData("section_instructors");
+
           if (sectData && sectData.length > 0) {
-            const formattedSections = sectData.map((section: any) => ({
-              id: section.id,
-              name: `${section.code}: ${section.name}`,
-              department_id: section.department_id,
-            }));
+            const formattedSections = sectData.map((section: any) => {
+              // Find instructors for this section
+              const sectionInstructors = sectionInstructorData
+                .filter((si: any) => si.section_id === section.id)
+                .map((si: any) => {
+                  return instructorData.find(
+                    (i: any) => i.id === si.instructor_id,
+                  );
+                })
+                .filter(Boolean);
+
+              return {
+                id: section.id,
+                name: `${section.code}: ${section.name}`,
+                code: section.code,
+                department_id: section.department_id,
+                instructors: sectionInstructors,
+              };
+            });
             setAvailableSections(formattedSections);
             // Don't set filtered sections here to prevent flickering
           } else {
@@ -184,22 +207,27 @@ const FormCreator = ({
           },
           {
             id: "2",
-            name: "BAPS",
-            code: "BAPS",
-            fullName: "Bachelor of Arts in Political Science",
+            name: "BSHM",
+            code: "BSHM",
+            fullName: "Bachelor of Science in Hospitality Management",
           },
           {
             id: "3",
-            name: "BSA",
-            code: "BSA",
-            fullName: "Bachelor of Science in Accountancy",
+            name: "BSPOLSCI",
+            code: "BSPOLSCI",
+            fullName: "Bachelor of Science in Political Science",
           },
           {
             id: "4",
-            name: "BSBA-MM",
+            name: "BSED",
+            code: "BSED",
+            fullName: "Bachelor of Science in Education",
+          },
+          {
+            id: "5",
+            name: "BSBA",
             code: "BSBA",
-            fullName:
-              "Bachelor of Science in Business Administration, Major in Marketing Management",
+            fullName: "Bachelor of Science in Business Administration",
           },
         ];
         setAvailableDepartments(defaultDepartments);
@@ -266,10 +294,11 @@ const FormCreator = ({
             availableQuestionnaires[0]?.id ||
             "default-questionnaire",
           department: initialData.department_id || "all-departments",
-          section:
-            initialData.section ||
-            availableSections[0]?.id ||
-            "default-section",
+          sections: initialData.section
+            ? [initialData.section]
+            : availableSections.length > 0
+              ? [availableSections[0]?.id]
+              : [],
           startDate: initialData.createdAt
             ? new Date(initialData.createdAt)
             : new Date(),
@@ -286,7 +315,8 @@ const FormCreator = ({
           questionnaire:
             availableQuestionnaires[0]?.id || "default-questionnaire",
           department: "all-departments",
-          section: availableSections[0]?.id || "default-section",
+          sections:
+            availableSections.length > 0 ? [availableSections[0]?.id] : [],
           startDate: new Date(),
           startTime: "08:00",
           endDate: new Date(new Date().setDate(new Date().getDate() + 14)), // Default to 2 weeks from now
@@ -306,6 +336,25 @@ const FormCreator = ({
     setIsLoading(true);
 
     try {
+      // Automatically assign instructors based on selected sections
+      const selectedSectionIds = values.sections;
+      const instructorsForSections = new Set();
+
+      // Find all instructors assigned to the selected sections
+      selectedSectionIds.forEach((sectionId) => {
+        const section = availableSections.find((s) => s.id === sectionId);
+        if (section && section.instructors && section.instructors.length > 0) {
+          section.instructors.forEach((instructor: any) => {
+            instructorsForSections.add(instructor.id);
+          });
+        }
+      });
+
+      // Log the automatically assigned instructors
+      console.log(
+        "Automatically assigned instructors:",
+        Array.from(instructorsForSections),
+      );
       // Combine date and time for start and end dates
       const startDateTime = new Date(values.startDate);
       const endDateTime = new Date(values.endDate);
@@ -330,7 +379,8 @@ const FormCreator = ({
       // Generate a unique link for the form
       const uniqueId = Math.random().toString(36).substring(2, 10);
       const baseUrl = window.location.origin;
-      const link = `${baseUrl}/student/evaluation/${uniqueId}?section=${values.section}`;
+      const sectionsParam = values.sections.join(",");
+      const link = `${baseUrl}/student/evaluation/${uniqueId}?sections=${sectionsParam}`;
       setGeneratedLink(link);
 
       console.log("Processed form data:", updatedValues);
@@ -557,47 +607,79 @@ const FormCreator = ({
 
               <FormField
                 control={form.control}
-                name="section"
+                name="sections"
                 render={({ field }) => {
                   // Get current department for debugging
                   const currentDept = form.getValues("department");
                   console.log("Current department:", currentDept);
                   console.log("Available filtered sections:", filteredSections);
+                  console.log("Selected sections:", field.value);
 
                   return (
                     <FormItem>
-                      <FormLabel>Class Section</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          console.log("Section selected:", value);
-                          field.onChange(value);
-                        }}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a class section" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {filteredSections && filteredSections.length > 0 ? (
-                            filteredSections.map((section, index) => (
-                              <SelectItem
-                                key={section.id || `section-${index}`}
-                                value={section.id || `temp-section-${index}`}
-                              >
-                                {section.name || "Unnamed Section"}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem key="no-sections" value="no-sections">
-                              No sections available for this department
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Class Sections</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value.length && "text-muted-foreground",
+                              )}
+                            >
+                              {field.value.length > 0
+                                ? `${field.value.length} section${field.value.length > 1 ? "s" : ""} selected`
+                                : "Select sections"}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <div className="p-2 max-h-[300px] overflow-auto">
+                            {filteredSections && filteredSections.length > 0 ? (
+                              filteredSections.map((section, index) => {
+                                const sectionId =
+                                  section.id || `temp-section-${index}`;
+                                const isSelected =
+                                  field.value.includes(sectionId);
+
+                                return (
+                                  <div
+                                    key={sectionId}
+                                    className="flex items-center space-x-2 p-2 hover:bg-muted rounded-md"
+                                  >
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={(checked) => {
+                                        const updatedValue = checked
+                                          ? [...field.value, sectionId]
+                                          : field.value.filter(
+                                              (value) => value !== sectionId,
+                                            );
+                                        field.onChange(updatedValue);
+                                      }}
+                                      id={`section-${sectionId}`}
+                                    />
+                                    <label
+                                      htmlFor={`section-${sectionId}`}
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-grow"
+                                    >
+                                      {section.name || "Unnamed Section"}
+                                    </label>
+                                  </div>
+                                );
+                              })
+                            ) : (
+                              <div className="p-4 text-sm text-muted-foreground">
+                                No sections available for this department
+                              </div>
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                       <FormDescription>
-                        Select the class section for this evaluation.
+                        Select one or more class sections for this evaluation.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

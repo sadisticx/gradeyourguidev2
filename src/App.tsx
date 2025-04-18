@@ -7,7 +7,7 @@ import StudentPortalPage from "./pages/student";
 import StudentEvaluationPage from "./pages/student/evaluation";
 
 // Lazy load pages
-const LoginPage = lazy(() => import("./pages/login"));
+const LoginPage = lazy(() => import("./pages/login/index.tsx"));
 const AdminsPage = lazy(() => import("./pages/admins"));
 const FormsPage = lazy(() => import("./pages/forms"));
 const QuestionnairesPage = lazy(() => import("./pages/questionnaires"));
@@ -24,6 +24,9 @@ function App() {
       }
     >
       <>
+        {/* Include dynamic routes - make sure they're before the catch-all route */}
+        {import.meta.env.VITE_TEMPO && useRoutes(routes)}
+
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
@@ -86,11 +89,12 @@ function App() {
             }
           />
 
+          {/* Add a route for Tempo storybook */}
+          {import.meta.env.VITE_TEMPO && <Route path="/tempobook/*" />}
+
           {/* Catch all route */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-        {/* Include dynamic routes */}
-        {useRoutes(routes)}
       </>
     </Suspense>
   );

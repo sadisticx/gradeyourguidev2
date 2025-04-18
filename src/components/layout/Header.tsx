@@ -48,11 +48,6 @@ const Header = ({
   return (
     <header className="bg-white border-b border-gray-200 h-20 flex items-center justify-between px-6 w-full">
       <div className="flex-1 flex items-center gap-3">
-        <img
-          src="/images/logo/grade-your-guide-logo.png"
-          alt="Grade Your Guide Logo"
-          className="h-12"
-        />
         <div>
           <h1 className="text-2xl font-bold text-gray-800">
             Faculty Evaluation System
