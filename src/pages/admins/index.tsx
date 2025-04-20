@@ -41,6 +41,9 @@ import AdminForm from "@/components/admins/AdminForm";
 import SectionsList from "@/components/sections/SectionsList";
 import InstructorsList from "@/components/sections/InstructorsList";
 import DepartmentsList from "@/components/sections/DepartmentsList";
+import SectionForm from "@/components/sections/SectionForm";
+import InstructorForm from "@/components/sections/InstructorForm";
+import DepartmentForm from "@/components/sections/DepartmentForm";
 import BackButton from "@/components/ui/back-button";
 import { useNavigate } from "react-router-dom";
 
@@ -71,6 +74,16 @@ const AdminsPage = () => {
   const [instructors, setInstructors] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
   const [filteredSections, setFilteredSections] = useState<any[]>([]);
+
+  // Form states
+  const [isDepartmentFormOpen, setIsDepartmentFormOpen] = useState(false);
+  const [selectedDepartmentItem, setSelectedDepartmentItem] =
+    useState<any>(null);
+  const [isSectionFormOpen, setIsSectionFormOpen] = useState(false);
+  const [selectedSection, setSelectedSection] = useState<any>(null);
+  const [isInstructorFormOpen, setIsInstructorFormOpen] = useState(false);
+  const [selectedInstructor, setSelectedInstructor] = useState<any>(null);
+  const [filteredInstructors, setFilteredInstructors] = useState<any[]>([]);
 
   // Check current user and fetch admins from Supabase
   useEffect(() => {
@@ -210,7 +223,7 @@ const AdminsPage = () => {
     checkUserAndLoadAdmins();
   }, [toast, navigate]);
 
-  // Fetch sections, instructors, and departments data
+  // Fetch departments, sections, and instructors data when the sections tab is active
   useEffect(() => {
     const loadSectionsData = async () => {
       if (activeTab !== "sections") return;
@@ -221,11 +234,11 @@ const AdminsPage = () => {
         const departmentData = await fetchData("departments");
         setDepartments(departmentData);
 
-        // Fetch sections with department info
+        // Fetch sections
         const sectionData = await fetchData("sections");
-        const sectionsWithDepartment = sectionData.map((section) => {
+        const sectionsWithDepartment = sectionData.map((section: any) => {
           const department = departmentData.find(
-            (d) => d.id === section.department_id,
+            (d: any) => d.id === section.department_id,
           );
           return {
             ...section,
@@ -235,43 +248,23 @@ const AdminsPage = () => {
         setSections(sectionsWithDepartment);
         setFilteredSections(sectionsWithDepartment);
 
-        // Fetch instructors with department info
+        // Fetch instructors
         const instructorData = await fetchData("instructors");
-        const instructorsWithDetails = instructorData.map((instructor) => {
-          const department = departmentData.find(
-            (d) => d.id === instructor.department_id,
-          );
-          return {
-            ...instructor,
-            departmentName: department ? department.name : "Unknown Department",
-            sections: [], // Will be populated with section data later
-          };
-        });
-
-        // Fetch section-instructor relationships
-        const sectionInstructorData = await fetchData("section_instructors");
-
-        // Map sections to instructors
-        const instructorsWithSections = instructorsWithDetails.map(
-          (instructor) => {
-            const assignedSections = sectionInstructorData
-              .filter((si) => si.instructor_id === instructor.id)
-              .map((si) => {
-                const section = sectionsWithDepartment.find(
-                  (s) => s.id === si.section_id,
-                );
-                return section || null;
-              })
-              .filter(Boolean);
-
+        const instructorsWithDepartment = instructorData.map(
+          (instructor: any) => {
+            const department = departmentData.find(
+              (d: any) => d.id === instructor.department_id,
+            );
             return {
               ...instructor,
-              sections: assignedSections,
+              departmentName: department
+                ? department.name
+                : "Unknown Department",
             };
           },
         );
-
-        setInstructors(instructorsWithSections);
+        setInstructors(instructorsWithDepartment);
+        setFilteredInstructors(instructorsWithDepartment);
 
         toast({
           title: "Success",
@@ -335,20 +328,6 @@ const AdminsPage = () => {
             department_id: "3",
             departmentName: "Bachelor of Science in Political Science",
           },
-          {
-            id: "104",
-            name: "Educational Psychology",
-            code: "BSED101-A",
-            department_id: "4",
-            departmentName: "Bachelor of Science in Education",
-          },
-          {
-            id: "105",
-            name: "Principles of Management",
-            code: "BSBA101-A",
-            department_id: "5",
-            departmentName: "Bachelor of Science in Business Administration",
-          },
         ];
         setSections(defaultSections);
         setFilteredSections(defaultSections);
@@ -361,7 +340,6 @@ const AdminsPage = () => {
             email: "john.smith@example.com",
             department_id: "1",
             departmentName: "Bachelor of Science in Information Technology",
-            sections: [defaultSections[0]],
           },
           {
             id: "202",
@@ -369,7 +347,6 @@ const AdminsPage = () => {
             email: "jane.doe@example.com",
             department_id: "2",
             departmentName: "Bachelor of Science in Hospitality Management",
-            sections: [defaultSections[1]],
           },
           {
             id: "203",
@@ -377,26 +354,10 @@ const AdminsPage = () => {
             email: "robert.johnson@example.com",
             department_id: "3",
             departmentName: "Bachelor of Science in Political Science",
-            sections: [defaultSections[2]],
-          },
-          {
-            id: "204",
-            name: "Prof. Maria Garcia",
-            email: "maria.garcia@example.com",
-            department_id: "4",
-            departmentName: "Bachelor of Science in Education",
-            sections: [defaultSections[3]],
-          },
-          {
-            id: "205",
-            name: "Dr. William Chen",
-            email: "william.chen@example.com",
-            department_id: "5",
-            departmentName: "Bachelor of Science in Business Administration",
-            sections: [defaultSections[4]],
           },
         ];
         setInstructors(defaultInstructors);
+        setFilteredInstructors(defaultInstructors);
       } finally {
         setIsLoading(false);
       }
@@ -404,28 +365,6 @@ const AdminsPage = () => {
 
     loadSectionsData();
   }, [activeTab, toast]);
-
-  // Filter sections when department or search term changes
-  useEffect(() => {
-    if (activeTab !== "sections") return;
-
-    let filtered = [...sections];
-    if (selectedDepartment !== "all") {
-      filtered = filtered.filter(
-        (section) => section.department_id === selectedDepartment,
-      );
-    }
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (section) =>
-          section.code?.toLowerCase().includes(term) ||
-          section.name?.toLowerCase().includes(term) ||
-          section.departmentName?.toLowerCase().includes(term),
-      );
-    }
-    setFilteredSections(filtered);
-  }, [selectedDepartment, searchTerm, sections, activeTab]);
 
   // Filter admins based on search term
   const filteredAdmins = admins.filter(
@@ -435,16 +374,6 @@ const AdminsPage = () => {
       admin.role.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  // Filter instructors based on search term
-  const filteredInstructors = instructors.filter(
-    (instructor) =>
-      instructor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.departmentName
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()),
-  );
-
   // Filter departments based on search term
   const filteredDepartments = departments.filter(
     (department) =>
@@ -452,19 +381,36 @@ const AdminsPage = () => {
       department.code?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  // Filter sections based on search term
+  useEffect(() => {
+    if (sections.length > 0) {
+      const filtered = sections.filter(
+        (section) =>
+          section.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          section.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          section.departmentName
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()),
+      );
+      setFilteredSections(filtered);
+    }
+
+    if (instructors.length > 0) {
+      const filtered = instructors.filter(
+        (instructor) =>
+          instructor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          instructor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          instructor.departmentName
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()),
+      );
+      setFilteredInstructors(filtered);
+    }
+  }, [searchTerm, sections, instructors]);
+
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
     useState(false);
   const [resetPasswordEmail, setResetPasswordEmail] = useState("");
-  const [isInstructorFormOpen, setIsInstructorFormOpen] = useState(false);
-  const [isSectionFormOpen, setIsSectionFormOpen] = useState(false);
-  const [isDepartmentFormOpen, setIsDepartmentFormOpen] = useState(false);
-  const [selectedInstructor, setSelectedInstructor] = useState<any>(null);
-  const [selectedSection, setSelectedSection] = useState<any>(null);
-  const [selectedDepartmentItem, setSelectedDepartmentItem] =
-    useState<any>(null);
-  const [isAssignInstructorsOpen, setIsAssignInstructorsOpen] = useState(false);
-  const [sectionsToAssign, setSectionsToAssign] = useState<string[]>([]);
-  const [instructorsToAssign, setInstructorsToAssign] = useState<string[]>([]);
 
   const handleAddAdmin = () => {
     setSelectedAdmin(null);
@@ -660,36 +606,74 @@ const AdminsPage = () => {
     }
   };
 
+  // Department management handlers
+  const handleAddDepartment = () => {
+    setSelectedDepartmentItem(null);
+    setIsDepartmentFormOpen(true);
+  };
+
+  const handleEditDepartment = (department: any) => {
+    setSelectedDepartmentItem(department);
+    setIsDepartmentFormOpen(true);
+  };
+
+  const handleDepartmentFormSubmit = async (data: any) => {
+    try {
+      setIsLoading(true);
+
+      if (selectedDepartmentItem) {
+        // Update existing department
+        await updateData("departments", selectedDepartmentItem.id, data);
+
+        // Update local state
+        const updatedDepartments = departments.map((department) => {
+          if (department.id === selectedDepartmentItem.id) {
+            return {
+              ...department,
+              ...data,
+            };
+          }
+          return department;
+        });
+
+        setDepartments(updatedDepartments);
+
+        toast({
+          title: "Success",
+          description: "Department updated successfully",
+        });
+      } else {
+        // Create new department
+        const result = await insertData("departments", data);
+
+        if (result && result.length > 0) {
+          const newDepartment = result[0];
+          setDepartments([...departments, newDepartment]);
+
+          toast({
+            title: "Success",
+            description: "Department created successfully",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error saving department:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save department. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      setIsDepartmentFormOpen(false);
+      setSelectedDepartmentItem(null);
+    }
+  };
+
   // Section management handlers
   const handleAddSection = () => {
     setSelectedSection(null);
     setIsSectionFormOpen(true);
-  };
-
-  const handleEditSection = (section: any) => {
-    setSelectedSection(section);
-    setIsSectionFormOpen(true);
-  };
-
-  const handleDeleteSection = async (id: string) => {
-    try {
-      await deleteData("sections", id);
-      setSections(sections.filter((section) => section.id !== id));
-      setFilteredSections(
-        filteredSections.filter((section) => section.id !== id),
-      );
-      toast({
-        title: "Success",
-        description: "Section deleted successfully",
-      });
-    } catch (error) {
-      console.error("Error deleting section:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete section. Please try again.",
-        variant: "destructive",
-      });
-    }
   };
 
   // Instructor management handlers
@@ -703,10 +687,90 @@ const AdminsPage = () => {
     setIsInstructorFormOpen(true);
   };
 
+  const handleInstructorFormSubmit = async (data: any) => {
+    try {
+      setIsLoading(true);
+
+      if (selectedInstructor) {
+        // Update existing instructor
+        await updateData("instructors", selectedInstructor.id, data);
+
+        // Update local state
+        const updatedInstructors = instructors.map((instructor) => {
+          if (instructor.id === selectedInstructor.id) {
+            const department = departments.find(
+              (d) => d.id === data.department_id,
+            );
+            return {
+              ...instructor,
+              ...data,
+              departmentName: department
+                ? department.name
+                : "Unknown Department",
+            };
+          }
+          return instructor;
+        });
+
+        setInstructors(updatedInstructors);
+        setFilteredInstructors(updatedInstructors);
+
+        toast({
+          title: "Success",
+          description: "Instructor updated successfully",
+        });
+      } else {
+        // Create new instructor
+        const result = await insertData("instructors", data);
+
+        if (result && result.length > 0) {
+          const newInstructor = result[0];
+          const department = departments.find(
+            (d) => d.id === data.department_id,
+          );
+          const instructorWithDepartment = {
+            ...newInstructor,
+            departmentName: department ? department.name : "Unknown Department",
+          };
+
+          setInstructors([...instructors, instructorWithDepartment]);
+          setFilteredInstructors([
+            ...filteredInstructors,
+            instructorWithDepartment,
+          ]);
+
+          toast({
+            title: "Success",
+            description: "Instructor created successfully",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error saving instructor:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save instructor. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      setIsInstructorFormOpen(false);
+      setSelectedInstructor(null);
+    }
+  };
+
   const handleDeleteInstructor = async (id: string) => {
     try {
+      // Delete instructor from database
       await deleteData("instructors", id);
-      setInstructors(instructors.filter((instructor) => instructor.id !== id));
+
+      // Update local state
+      const updatedInstructors = instructors.filter(
+        (instructor) => instructor.id !== id,
+      );
+      setInstructors(updatedInstructors);
+      setFilteredInstructors(updatedInstructors);
+
       toast({
         title: "Success",
         description: "Instructor deleted successfully",
@@ -721,21 +785,122 @@ const AdminsPage = () => {
     }
   };
 
-  // Department management handlers
-  const handleAddDepartment = () => {
-    setSelectedDepartmentItem(null);
-    setIsDepartmentFormOpen(true);
+  const handleSectionFormSubmit = async (data: any) => {
+    try {
+      setIsLoading(true);
+
+      if (selectedSection) {
+        // Update existing section
+        await updateData("sections", selectedSection.id, data);
+
+        // Update local state
+        const updatedSections = sections.map((section) => {
+          if (section.id === selectedSection.id) {
+            const department = departments.find(
+              (d) => d.id === data.department_id,
+            );
+            return {
+              ...section,
+              ...data,
+              departmentName: department
+                ? department.name
+                : "Unknown Department",
+            };
+          }
+          return section;
+        });
+
+        setSections(updatedSections);
+        setFilteredSections(updatedSections);
+
+        toast({
+          title: "Success",
+          description: "Section updated successfully",
+        });
+      } else {
+        // Create new section
+        const result = await insertData("sections", data);
+
+        if (result && result.length > 0) {
+          const newSection = result[0];
+          const department = departments.find(
+            (d) => d.id === data.department_id,
+          );
+          const sectionWithDepartment = {
+            ...newSection,
+            departmentName: department ? department.name : "Unknown Department",
+          };
+
+          setSections([...sections, sectionWithDepartment]);
+          setFilteredSections([...filteredSections, sectionWithDepartment]);
+
+          toast({
+            title: "Success",
+            description: "Section created successfully",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error saving section:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save section. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      setIsSectionFormOpen(false);
+      setSelectedSection(null);
+    }
   };
 
-  const handleEditDepartment = (department: any) => {
-    setSelectedDepartmentItem(department);
-    setIsDepartmentFormOpen(true);
+  const handleDeleteSection = async (id: string) => {
+    try {
+      // Delete section from database
+      await deleteData("sections", id);
+
+      // Update local state
+      const updatedSections = sections.filter((section) => section.id !== id);
+      setSections(updatedSections);
+      setFilteredSections(updatedSections);
+
+      toast({
+        title: "Success",
+        description: "Section deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting section:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete section. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeleteDepartment = async (id: string) => {
     try {
+      // Check if there are any sections or instructors using this department
+      const sectionsUsingDepartment = sections.filter(
+        (section) => section.department_id === id,
+      );
+
+      if (sectionsUsingDepartment.length > 0) {
+        toast({
+          title: "Cannot Delete Department",
+          description:
+            "This department is being used by sections. Please reassign them first.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Delete department from database
       await deleteData("departments", id);
+
+      // Update local state
       setDepartments(departments.filter((department) => department.id !== id));
+
       toast({
         title: "Success",
         description: "Department deleted successfully",
@@ -748,102 +913,6 @@ const AdminsPage = () => {
         variant: "destructive",
       });
     }
-  };
-
-  // Instructor assignment handlers
-  const handleAssignInstructors = () => {
-    setSectionsToAssign([]);
-    setInstructorsToAssign([]);
-    setIsAssignInstructorsOpen(true);
-  };
-
-  const handleSaveAssignments = async () => {
-    try {
-      setIsLoading(true);
-
-      // Delete existing assignments for these sections
-      for (const sectionId of sectionsToAssign) {
-        await deleteData("section_instructors", undefined, {
-          column: "section_id",
-          value: sectionId,
-        });
-      }
-
-      // Create new assignments
-      const assignments = [];
-      for (const sectionId of sectionsToAssign) {
-        for (const instructorId of instructorsToAssign) {
-          assignments.push({
-            section_id: sectionId,
-            instructor_id: instructorId,
-          });
-        }
-      }
-
-      if (assignments.length > 0) {
-        await insertData("section_instructors", assignments);
-      }
-
-      // Update local state
-      const updatedInstructors = [...instructors];
-      for (const instructorId of instructorsToAssign) {
-        const instructorIndex = updatedInstructors.findIndex(
-          (i) => i.id === instructorId,
-        );
-        if (instructorIndex >= 0) {
-          const sectionObjects = sectionsToAssign
-            .map((sectionId) => {
-              return sections.find((s) => s.id === sectionId);
-            })
-            .filter(Boolean);
-
-          updatedInstructors[instructorIndex] = {
-            ...updatedInstructors[instructorIndex],
-            sections: [
-              ...updatedInstructors[instructorIndex].sections,
-              ...sectionObjects,
-            ],
-          };
-        }
-      }
-      setInstructors(updatedInstructors);
-
-      toast({
-        title: "Success",
-        description: `Assigned ${instructorsToAssign.length} instructor(s) to ${sectionsToAssign.length} section(s) successfully`,
-      });
-
-      setIsAssignInstructorsOpen(false);
-    } catch (error) {
-      console.error("Error assigning instructors:", error);
-      toast({
-        title: "Error",
-        description: "Failed to assign instructors. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Bulk select sections by year level
-  const handleBulkSelectSections = (yearLevel: string) => {
-    const yearSections = sections.filter((section) => {
-      // Extract year level from section code (e.g., "BSIT101-A" -> "1")
-      const match = section.code?.match(/\d+/);
-      if (match && match[0]) {
-        const sectionYear = match[0].charAt(0); // Get first digit
-        return sectionYear === yearLevel;
-      }
-      return false;
-    });
-
-    setSectionsToAssign(yearSections.map((section) => section.id));
-
-    toast({
-      title: "Sections Selected",
-      description: `Selected ${yearSections.length} sections from year level ${yearLevel}`,
-    });
   };
 
   return (
@@ -885,30 +954,27 @@ const AdminsPage = () => {
             </Dialog>
           )}
 
-          {activeTab === "sections" && activeSubTab === "sections" && (
-            <Button onClick={handleAddSection}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Section
-            </Button>
-          )}
-
-          {activeTab === "sections" && activeSubTab === "instructors" && (
+          {activeTab === "sections" && (
             <div className="flex space-x-2">
-              <Button onClick={handleAssignInstructors} variant="outline">
-                Assign Instructors
-              </Button>
-              <Button onClick={handleAddInstructor}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add New Instructor
-              </Button>
+              {activeSubTab === "departments" && (
+                <Button onClick={handleAddDepartment}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add New Department
+                </Button>
+              )}
+              {activeSubTab === "sections" && (
+                <Button onClick={handleAddSection}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add New Section
+                </Button>
+              )}
+              {activeSubTab === "instructors" && (
+                <Button onClick={handleAddInstructor}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add New Instructor
+                </Button>
+              )}
             </div>
-          )}
-
-          {activeTab === "sections" && activeSubTab === "departments" && (
-            <Button onClick={handleAddDepartment}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Department
-            </Button>
           )}
         </div>
       </div>
@@ -952,31 +1018,6 @@ const AdminsPage = () => {
             {/* Filter and Search */}
             <Card className="bg-white p-4 mb-4">
               <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-end md:space-x-4">
-                <div className="space-y-2 w-full md:w-1/4">
-                  <label
-                    htmlFor="department-filter"
-                    className="text-sm font-medium"
-                  >
-                    Department
-                  </label>
-                  <Select
-                    value={selectedDepartment}
-                    onValueChange={setSelectedDepartment}
-                  >
-                    <SelectTrigger id="department-filter">
-                      <SelectValue placeholder="All Departments" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Departments</SelectItem>
-                      {departments.map((department) => (
-                        <SelectItem key={department.id} value={department.id}>
-                          {department.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 <div className="space-y-2 w-full md:w-1/3">
                   <label htmlFor="search" className="text-sm font-medium">
                     Search
@@ -1021,7 +1062,10 @@ const AdminsPage = () => {
                   <TabsContent value="sections" className="p-6">
                     <SectionsList
                       sections={filteredSections}
-                      onEdit={handleEditSection}
+                      onEdit={(section) => {
+                        setSelectedSection(section);
+                        setIsSectionFormOpen(true);
+                      }}
                       onDelete={handleDeleteSection}
                       isLoading={isLoading}
                     />
@@ -1099,125 +1143,45 @@ const AdminsPage = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Assign Instructors Modal */}
+        {/* Department Form Dialog */}
         <Dialog
-          open={isAssignInstructorsOpen}
-          onOpenChange={setIsAssignInstructorsOpen}
+          open={isDepartmentFormOpen}
+          onOpenChange={setIsDepartmentFormOpen}
         >
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Assign Instructors to Sections</DialogTitle>
-              <DialogDescription>
-                Select sections and instructors to create assignments.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-6 py-4">
-              <div>
-                <Label className="mb-2 block">
-                  Bulk Select Sections by Year Level
-                </Label>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {["1", "2", "3", "4"].map((year) => (
-                    <Button
-                      key={year}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleBulkSelectSections(year)}
-                    >
-                      Year {year}
-                    </Button>
-                  ))}
-                </div>
-              </div>
+          <DialogContent className="sm:max-w-[600px] p-0">
+            <DepartmentForm
+              department={selectedDepartmentItem}
+              onSubmit={handleDepartmentFormSubmit}
+              onCancel={() => setIsDepartmentFormOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
 
-              <div>
-                <Label className="mb-2 block">Select Sections</Label>
-                <div className="border rounded-md p-4 max-h-[200px] overflow-y-auto">
-                  {sections.map((section) => (
-                    <div
-                      key={section.id}
-                      className="flex items-center space-x-2 mb-2"
-                    >
-                      <input
-                        type="checkbox"
-                        id={`section-${section.id}`}
-                        checked={sectionsToAssign.includes(section.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSectionsToAssign([
-                              ...sectionsToAssign,
-                              section.id,
-                            ]);
-                          } else {
-                            setSectionsToAssign(
-                              sectionsToAssign.filter(
-                                (id) => id !== section.id,
-                              ),
-                            );
-                          }
-                        }}
-                      />
-                      <label htmlFor={`section-${section.id}`}>
-                        {section.code}: {section.name}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
+        {/* Section Form Dialog */}
+        <Dialog open={isSectionFormOpen} onOpenChange={setIsSectionFormOpen}>
+          <DialogContent className="sm:max-w-[600px] p-0">
+            <SectionForm
+              section={selectedSection}
+              departments={departments}
+              onSubmit={handleSectionFormSubmit}
+              onCancel={() => setIsSectionFormOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
 
-              <div>
-                <Label className="mb-2 block">Select Instructors</Label>
-                <div className="border rounded-md p-4 max-h-[200px] overflow-y-auto">
-                  {instructors.map((instructor) => (
-                    <div
-                      key={instructor.id}
-                      className="flex items-center space-x-2 mb-2"
-                    >
-                      <input
-                        type="checkbox"
-                        id={`instructor-${instructor.id}`}
-                        checked={instructorsToAssign.includes(instructor.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setInstructorsToAssign([
-                              ...instructorsToAssign,
-                              instructor.id,
-                            ]);
-                          } else {
-                            setInstructorsToAssign(
-                              instructorsToAssign.filter(
-                                (id) => id !== instructor.id,
-                              ),
-                            );
-                          }
-                        }}
-                      />
-                      <label htmlFor={`instructor-${instructor.id}`}>
-                        {instructor.name}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsAssignInstructorsOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSaveAssignments}
-                disabled={
-                  sectionsToAssign.length === 0 ||
-                  instructorsToAssign.length === 0 ||
-                  isLoading
-                }
-              >
-                {isLoading ? "Saving..." : "Save Assignments"}
-              </Button>
-            </DialogFooter>
+        {/* Instructor Form Dialog */}
+        <Dialog
+          open={isInstructorFormOpen}
+          onOpenChange={setIsInstructorFormOpen}
+        >
+          <DialogContent className="sm:max-w-[600px] p-0">
+            <InstructorForm
+              instructor={selectedInstructor}
+              departments={departments}
+              sections={sections}
+              onSubmit={handleInstructorFormSubmit}
+              onCancel={() => setIsInstructorFormOpen(false)}
+            />
           </DialogContent>
         </Dialog>
       </div>
