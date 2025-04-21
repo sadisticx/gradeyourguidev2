@@ -36,6 +36,24 @@ const FormsPage = () => {
     { id: string; name: string; code: string }[]
   >([]);
 
+  // Add a default form if none exists
+  useEffect(() => {
+    if (forms.length === 0 && !isLoading) {
+      const defaultForm = {
+        id: "default-form-1",
+        title: "End of Semester Evaluation",
+        questionnaire: "1",
+        questionnaireName: "Teaching Effectiveness Evaluation",
+        section: "IT101-A",
+        status: "active" as const,
+        responses: 0,
+        createdAt: new Date(),
+        expiresAt: new Date(new Date().setDate(new Date().getDate() + 14)),
+      };
+      setForms([defaultForm]);
+    }
+  }, [forms, isLoading]);
+
   // Fetch forms, questionnaires, and departments from Supabase
   useEffect(() => {
     const loadData = async () => {
@@ -320,6 +338,15 @@ const FormsPage = () => {
 
   const handleFormSubmit = async (data: any) => {
     console.log("Form submission received in FormsPage:", data);
+    // Handle all-departments value
+    if (data.department === "all-departments") {
+      data.department = null;
+    }
+    // Handle no-sections value
+    if (data.section === "no-sections") {
+      // Use a default section if none is selected
+      data.section = "default-section";
+    }
     try {
       setIsLoading(true);
 
@@ -510,7 +537,7 @@ const FormsPage = () => {
           </TabsContent>
         </Tabs>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-6 bg-white p-6 rounded-md shadow">
           <div className="flex items-center mb-4">
             <Button
               variant="outline"

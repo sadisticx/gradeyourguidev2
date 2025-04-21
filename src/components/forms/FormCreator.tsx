@@ -102,7 +102,7 @@ const FormCreator: React.FC<FormCreatorProps> = ({
         }
       : {
           title: "",
-          questionnaire: questionnaires[0]?.id || "",
+          questionnaire: questionnaires.length > 0 ? questionnaires[0]?.id : "",
           department: "",
           section: "",
           startDate: new Date(),
@@ -115,15 +115,24 @@ const FormCreator: React.FC<FormCreatorProps> = ({
   const watchDepartment = form.watch("department");
 
   useEffect(() => {
-    if (watchDepartment) {
+    console.log("Department changed to:", watchDepartment);
+    console.log("Available sections:", sections);
+
+    if (watchDepartment && watchDepartment !== "all-departments") {
       const filtered = sections.filter(
         (section) => section.department_id === watchDepartment,
       );
+      console.log("Filtered sections:", filtered);
       setFilteredSections(filtered);
     } else {
       setFilteredSections(sections);
     }
   }, [watchDepartment, sections]);
+
+  // Log sections data for debugging
+  useEffect(() => {
+    console.log("FormCreator received sections:", sections);
+  }, [sections]);
 
   const handleSubmit = (values: FormValues) => {
     setIsLoading(true);
@@ -225,7 +234,9 @@ const FormCreator: React.FC<FormCreatorProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">All Departments</SelectItem>
+                        <SelectItem value="all-departments">
+                          All Departments
+                        </SelectItem>
                         {departments.map((department) => (
                           <SelectItem key={department.id} value={department.id}>
                             {department.name}
@@ -261,7 +272,7 @@ const FormCreator: React.FC<FormCreatorProps> = ({
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="" disabled>
+                          <SelectItem value="no-sections">
                             No sections available
                           </SelectItem>
                         )}
